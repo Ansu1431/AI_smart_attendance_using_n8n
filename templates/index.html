@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#060f0c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AI Smart Attendance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar-custom">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-brain"></i>
+        <span>AI Attendance</span>
+      </a>
+      <div class="d-flex gap-2 align-items-center">
+        <a class="btn btn-admin" href="/admin">
+          <i class="fas fa-user-shield"></i>
+          <span class="d-none d-sm-inline ms-1">Admin</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- ── Class Schedule Banner ── -->
+    <div id="classBanner" class="class-banner d-none fade-in-up mb-3">
+      <div class="class-banner-inner">
+        <div class="class-banner-left">
+          <div class="class-banner-icon"><i class="fas fa-book-open"></i></div>
+          <div>
+            <div class="class-banner-label">Class in Session — Mark your attendance now!</div>
+            <div class="class-banner-subject" id="bannerSubject">—</div>
+          </div>
+        </div>
+        <div class="class-banner-right">
+          <div class="class-banner-meta">
+            <span><i class="fas fa-map-marker-alt me-1"></i><span id="bannerRoom">—</span></span>
+            <span><i class="fas fa-clock me-1"></i><span id="bannerTime">—</span></span>
+            <span class="class-banner-mins" id="bannerMins">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Page header ── -->
+    <div class="text-center mb-4 fade-in-up">
+      <h1 class="page-title mb-2">
+        <i class="fas fa-camera me-2"></i>Mark Attendance
+      </h1>
+      <p class="page-subtitle">
+        Stand in front of the camera — your attendance is recorded automatically
+      </p>
+    </div>
+
+    <!-- ── Main content: video + panel ── -->
+    <div class="glass-card fade-in-up" style="animation-delay:0.08s;">
+      <div class="row g-3">
+
+        <!-- Video column -->
+        <div class="col-lg-8 col-md-7">
+          <div class="video-wrap">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+          </div>
+          <p class="text-white-60 mt-2 text-center" style="font-size:0.78rem;">
+            <i class="fas fa-info-circle me-1"></i>
+            Ensure your face is well-lit and centred in the frame
+          </p>
+        </div>
+
+        <!-- Control panel column -->
+        <div class="col-lg-4 col-md-5">
+          <div style="display:flex; flex-direction:column; gap:0.75rem; height:100%;">
+
+            <!-- Panel header -->
+            <div class="d-flex align-items-center gap-2">
+              <div class="icon-wrapper" style="background:var(--success-dim);">
+                <i class="fas fa-fingerprint" style="color:var(--success);"></i>
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:0.95rem;">Recognition Panel</div>
+                <div style="font-size:0.73rem; color:var(--muted2);">Auto-scanning every 1.5s</div>
+              </div>
+            </div>
+
+            <!-- Scan status -->
+            <div id="scanStatus" class="scan-status scanning">
+              <div class="scan-status-icon">
+                <i id="scanIcon" class="fas fa-camera"></i>
+              </div>
+              <div class="scan-status-body">
+                <div id="scanText" class="scan-status-title">Starting camera…</div>
+                <div id="scanSub"  class="scan-status-sub">Please wait</div>
+              </div>
+            </div>
+
+            <!-- QR Code card (shown after recognition) -->
+            <div id="studentDetails" class="d-none qr-card">
+              <div class="qr-card-header">
+                <i class="fas fa-user-check" style="color:var(--success);"></i>
+                <div>
+                  <div id="studentName" class="qr-student-name">—</div>
+                  <div id="studentMeta" class="qr-student-meta">—</div>
+                </div>
+              </div>
+              <div class="qr-divider"></div>
+              <div class="qr-body">
+                <div class="qr-label">
+                  <i class="fas fa-qrcode me-1"></i>Scan to view your profile
+                </div>
+                <div id="qrCodeBox" class="qr-code-box"></div>
+                <div class="qr-hint">Point your phone camera at this code</div>
+              </div>
+              <!-- Hidden table for data but not shown -->
+              <table style="display:none;"><tbody id="marksTable"></tbody></table>
+            </div>
+
+            <!-- Tips -->
+            <div class="mt-auto d-flex flex-column gap-2">
+              <div class="info-row">
+                <div class="icon-wrapper" style="width:32px;height:32px;font-size:0.8rem;">
+                  <i class="fas fa-lightbulb" style="color:var(--accent);"></i>
+                </div>
+                <div>
+                  <div class="label">Good lighting</div>
+                  <div class="desc">Avoid back-light, face the camera</div>
+                </div>
+              </div>
+              <div class="info-row">
+                <div class="icon-wrapper" style="width:32px;height:32px;font-size:0.8rem;">
+                  <i class="fas fa-hourglass-half" style="color:var(--info);"></i>
+                </div>
+                <div>
+                  <div class="label">1-hour cooldown</div>
+                  <div class="desc">Re-mark after 1 hour per class</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div><!-- /glass-card -->
+
+  </div><!-- /container -->
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand">
+        <i class="fas fa-brain me-1"></i>AI Smart Attendance
+      </span>
+      <span class="footer-sep">·</span>
+      <span class="footer-credit">Made with <i class="fas fa-heart footer-heart"></i> by <strong>Anshu Shekhar</strong></span>
+      <span class="footer-sep">·</span>
+      <a href="https://www.linkedin.com/in/anshu-shekhar-348233294/" target="_blank" class="footer-link">
+        <i class="fab fa-linkedin me-1"></i>LinkedIn
+      </a>
+      <a href="https://github.com/Ansu1431" target="_blank" class="footer-link">
+        <i class="fab fa-github me-1"></i>GitHub
+      </a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+  "name": "AI Attendance – Marks Sync (Google Sheets → Flask)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "sync-marks",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-manual-trigger",
+      "name": "Manual Sync Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 340],
+      "webhookId": "sync-marks-webhook",
+      "notes": "Flask calls this URL to fetch marks. Set this Production URL as N8N_MARKS_WEBHOOK in email_config.py"
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "options": {
+          "headerRow": 1
+        }
+      },
+      "id": "read-google-sheet",
+      "name": "Read Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [480, 340],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIALS_ID",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "notes": "Reads all rows from Sheet1. Columns required: name, student_email, parent_email, subject, exam_type, term, score, max_score"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform flat Google Sheet rows into nested format for Flask\n// Columns: name | student_email | parent_email | subject | exam_type (sessional/semester) | term | score | max_score\n\nconst rows = items.map(i => i.json);\nconst studentsMap = {};\n\nfor (const row of rows) {\n  const name = (row['name'] || row['Name'] || '').trim();\n  if (!name) continue;\n\n  if (!studentsMap[name]) {\n    studentsMap[name] = {\n      name,\n      student_email: (row['student_email'] || row['Student Email'] || '').trim(),\n      parent_email:  (row['parent_email']  || row['Parent Email']  || '').trim(),\n      marks: []\n    };\n  }\n\n  const subject   = (row['subject']   || row['Subject']   || '').trim();\n  const exam_type = (row['exam_type'] || row['Exam Type'] || '').trim().toLowerCase();\n  const term      = parseInt(row['term'] || row['Term'] || 1, 10) || 1;\n  const score     = parseFloat(row['score']     || row['Score']     || 0) || 0;\n  const max_score = parseFloat(row['max_score'] || row['Max Score'] || 100) || 100;\n\n  if (subject && (exam_type === 'sessional' || exam_type === 'semester')) {\n    studentsMap[name].marks.push({ subject, exam_type, term, score, max_score });\n  }\n}\n\nreturn [{ json: { students: Object.values(studentsMap) } }];"
+      },
+      "id": "transform-data",
+      "name": "Transform to Flask Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 340],
+      "notes": "Converts flat rows into {students:[{name, student_email, parent_email, marks:[...]}]}"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond with Marks Data",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [960, 340],
+      "notes": "Sends the transformed {students:[...]} JSON back to Flask as the HTTP response"
+    }
+  ],
+  "connections": {
+    "Manual Sync Webhook": {
+      "main": [[{ "node": "Read Google Sheet", "type": "main", "index": 0 }]]
+    },
+    "Read Google Sheet": {
+      "main": [[{ "node": "Transform to Flask Format", "type": "main", "index": 0 }]]
+    },
+    "Transform to Flask Format": {
+      "main": [[{ "node": "Respond with Marks Data", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": ["attendance", "marks-sync", "google-sheets"]
+}

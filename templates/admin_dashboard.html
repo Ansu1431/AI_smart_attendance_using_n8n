@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#060f0c" />
+  <title>Admin — AI Smart Attendance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar-custom">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-brain"></i>
+        <span class="d-none d-sm-inline">AI Smart Attendance</span>
+        <span class="d-sm-none">Admin</span>
+      </a>
+      <div class="d-flex gap-2">
+        <a class="btn btn-admin" href="/">
+          <i class="fas fa-home"></i>
+          <span class="d-none d-md-inline ms-1">Home</span>
+        </a>
+        <a class="btn btn-admin" href="/admin/logout">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="d-none d-md-inline ms-1">Logout</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- ── Current Class Banner (Admin) ── -->
+    <div id="adminClassBanner" class="class-banner d-none mb-3 fade-in-up">
+      <div class="class-banner-inner">
+        <div class="class-banner-left">
+          <div class="class-banner-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div>
+            <div class="class-banner-label">Currently Running — CSE/CST 6A</div>
+            <div class="class-banner-subject" id="adminBannerSubject">—</div>
+          </div>
+        </div>
+        <div class="class-banner-right">
+          <div class="class-banner-meta">
+            <span><i class="fas fa-map-marker-alt me-1"></i><span id="adminBannerRoom">—</span></span>
+            <span><i class="fas fa-clock me-1"></i><span id="adminBannerTime">—</span></span>
+            <span class="class-banner-mins" id="adminBannerMins">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Stats grid ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up">
+          <div class="stat-number">{{ students|length }}</div>
+          <div class="stat-label"><i class="fas fa-users me-1"></i>Students</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up" style="animation-delay:0.07s;">
+          <div class="stat-number">{{ attendance|length }}</div>
+          <div class="stat-label"><i class="fas fa-calendar me-1"></i>Days Logged</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up" style="animation-delay:0.14s; border-color:rgba(0,229,160,0.3);">
+          <div class="stat-number" id="todayCount" style="color:var(--success);">–</div>
+          <div class="stat-label"><i class="fas fa-calendar-day me-1"></i>Present Today</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up" style="animation-delay:0.21s; border-color:rgba(0,229,160,0.3);">
+          <div class="stat-number" id="todayRate" style="color:var(--success);">–</div>
+          <div class="stat-label"><i class="fas fa-percentage me-1"></i>Today's Rate</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up" style="animation-delay:0.28s; border-color:rgba(255,82,82,0.3);">
+          <div class="stat-number" id="alertCount" style="color:var(--danger);">–</div>
+          <div class="stat-label"><i class="fas fa-exclamation-triangle me-1"></i>Below 40%</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card fade-in-up" style="animation-delay:0.35s; border-color:rgba(37,211,102,0.3);">
+          <div class="stat-number" style="color:#25d366;"><i class="fab fa-whatsapp" style="font-size:1.5rem;"></i></div>
+          <div class="stat-label">WhatsApp Alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- ── Register Student ── -->
+      <div class="col-lg-6" id="section-register">
+        <div class="card-modern fade-in-up">
+          <div class="card-header">
+            <i class="fas fa-user-plus me-2" style="color:var(--success);"></i>Register New Student
+          </div>
+          <div class="card-body">
+            <form id="addForm">
+              <div class="row g-3 mb-3">
+                <div class="col-12">
+                  <label class="form-label-modern"><i class="fas fa-id-card me-1"></i>Full Name</label>
+                  <input name="name" class="form-control form-control-modern" required placeholder="e.g. John Smith">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label-modern"><i class="fas fa-envelope me-1"></i>Student Email</label>
+                  <input name="student_email" type="email" class="form-control form-control-modern" placeholder="student@example.com">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label-modern"><i class="fas fa-envelope me-1"></i>Parent Email</label>
+                  <input name="parent_email" type="email" class="form-control form-control-modern" placeholder="parent@example.com">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label-modern"><i class="fab fa-whatsapp me-1" style="color:#25d366;"></i>Student WhatsApp</label>
+                  <input name="student_phone" type="tel" class="form-control form-control-modern" placeholder="+91XXXXXXXXXX">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label-modern"><i class="fab fa-whatsapp me-1" style="color:#25d366;"></i>Parent WhatsApp</label>
+                  <input name="parent_phone" type="tel" class="form-control form-control-modern" placeholder="+91XXXXXXXXXX">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label-modern"><i class="fas fa-image me-1"></i>Photo (optional)</label>
+                <input type="file" name="image" accept="image/*" class="form-control form-control-modern">
+                <div class="text-white-60 mt-1" style="font-size:0.77rem;">
+                  Or capture using the webcam below
+                </div>
+              </div>
+
+              <div class="admin-webcam mb-3">
+                <div class="admin-video-wrap">
+                  <video id="adminVideo" autoplay playsinline muted></video>
+                </div>
+                <div class="admin-capture">
+                  <button type="button" id="capturePhoto" class="btn btn-modern btn-success-modern w-100">
+                    <i class="fas fa-camera me-1"></i>Capture
+                  </button>
+                  <img id="capturedPreview" class="admin-preview" alt="Preview" />
+                  <small id="captureHint" class="text-white-60"></small>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-modern btn-success-modern w-100">
+                <i class="fas fa-plus-circle me-2"></i>Add Student
+              </button>
+              <div id="addResult" class="mt-2" style="font-size:0.85rem;"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Registered Students ── -->
+      <div class="col-lg-6" id="section-students">
+        <div class="card-modern fade-in-up" style="animation-delay:0.07s;">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-users me-2" style="color:var(--success);"></i>Registered Students</span>
+            <span class="badge" style="background:var(--success-dim);color:var(--success);">{{ students|length }}</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height:480px; overflow-y:auto;">
+              <table class="table table-modern mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:52px;"></th>
+                    <th>Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if students %}
+                    {% for s in students %}
+                    <tr>
+                      <td>
+                        <img src="/images/{{ s.filename }}"
+                             onerror="this.src='/static/img/placeholder.png'"
+                             class="student-avatar" alt="{{ s.name }}">
+                      </td>
+                      <td class="align-middle">
+                        <div class="student-name-dark">{{ s.name }}</div>
+                      </td>
+                      <td class="align-middle">
+                        <div class="d-flex gap-1 flex-wrap">
+                          <button data-name="{{ s.name }}" class="btn btn-sm btn-modern btn-success-modern send-marks" title="Send marks email">
+                            <i class="fas fa-envelope"></i>
+                          </button>
+                          <button data-name="{{ s.name }}" class="btn btn-sm btn-modern remove" style="background:linear-gradient(135deg,var(--danger),#c62828);color:#fff;" title="Remove student">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="3" class="text-center text-white-60 py-5">
+                        <i class="fas fa-user-slash fa-2x mb-2 d-block"></i>
+                        No students registered yet
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Marks (Synced from Sheet) ── -->
+      <div class="col-12" id="section-marks">
+        <div class="card-modern fade-in-up">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="fas fa-chart-bar me-2" style="color:var(--accent);"></i>Student Marks (from Google Sheet)</span>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <select id="marksStudentSelect" class="form-control form-control-modern" style="width:170px; min-height:36px; padding:0.35rem 0.7rem; font-size:0.84rem;">
+                <option value="">Select student</option>
+                {% for s in students %}
+                  <option value="{{ s.name }}">{{ s.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" id="syncMarks" class="btn btn-sm btn-modern btn-success-modern">
+                <i class="fas fa-rotate me-1"></i>Sync Sheet
+              </button>
+              <small class="text-white-60" id="syncStatus"></small>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-modern mb-0">
+                <thead>
+                  <tr>
+                    <th>Subject</th><th>Exam</th><th>Term</th><th>Score</th><th>Max</th><th>%</th>
+                  </tr>
+                </thead>
+                <tbody id="adminMarksTable">
+                  <tr><td colspan="6" class="text-center text-white-60 py-4">Select a student to view marks</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Performance Alerts ── -->
+      <div class="col-12" id="section-alerts">
+        <div class="card-modern fade-in-up">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 card-header-wrap">
+            <span>
+              <i class="fas fa-exclamation-triangle me-2" style="color:var(--danger);"></i>Performance Alerts
+              <span class="badge ms-1" style="background:var(--danger-dim);color:var(--danger);">Below 40%</span>
+              <span class="whatsapp-badge ms-1">
+                <i class="fab fa-whatsapp"></i> + WhatsApp
+              </span>
+            </span>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <small class="text-white-60" id="alertStatus"></small>
+              <button type="button" id="checkAlertsBtn" class="btn btn-sm btn-modern"
+                style="background:linear-gradient(135deg,var(--danger),#e53935);color:#fff;">
+                <i class="fas fa-bell me-1"></i>Check &amp; Send Alerts
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-modern mb-0">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Marks %</th>
+                    <th>Attendance %</th>
+                    <th>Status</th>
+                    <th>Alert</th>
+                  </tr>
+                </thead>
+                <tbody id="performanceTable">
+                  <tr>
+                    <td colspan="5" class="text-center text-white-60 py-4">
+                      <i class="fas fa-bell-slash me-2"></i>Click "Check &amp; Send Alerts" to run
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-3">
+              <small class="text-white-60">
+                <i class="fas fa-info-circle me-1"></i>
+                Sends email + WhatsApp to student and parent when marks or attendance fall below 40%.
+                Alert is sent only once per unique marks snapshot.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Present Today ── -->
+      <div class="col-12" id="section-today">
+        <div class="card-modern fade-in-up">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>
+              <i class="fas fa-user-check me-2" style="color:var(--success);"></i>Present Today
+              <span id="presentTodayDate" class="text-white-60 ms-2" style="font-size:0.78rem;"></span>
+            </span>
+            <small class="text-white-60" id="presentTodayMeta"></small>
+          </div>
+          <div class="card-body">
+            <div id="presentTodayGrid" class="d-flex flex-wrap gap-2">
+              <span class="text-white-60"><i class="fas fa-spinner fa-spin me-1"></i>Loading…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Attendance Records ── -->
+      <div class="col-12" id="section-attendance">
+        <div class="card-modern fade-in-up">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 card-header-wrap">
+            <span>
+              <i class="fas fa-history me-2"></i>Attendance Records
+              <span class="badge bg-secondary ms-1">{{ attendance|length }}</span>
+            </span>
+            <div class="d-flex gap-2 flex-wrap align-items-center export-row">
+              <input type="date" id="dateFilter" class="form-control form-control-modern"
+                style="width:150px; min-height:36px; padding:0.35rem 0.7rem; font-size:0.84rem;">
+              <button id="exportBtn" class="btn btn-sm btn-modern"
+                style="background:linear-gradient(135deg,#1a936f,var(--success));color:#061410;font-weight:600;">
+                <i class="fas fa-download me-1"></i>Export CSV
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+              <table class="table table-modern mb-0">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                  {% if attendance %}
+                    {% for r in attendance %}
+                    <tr data-date="{{ r.date }}">
+                      <td><strong class="student-name-dark">{{ r.name }}</strong></td>
+                      <td class="text-white-80">{{ r.date }}</td>
+                      <td class="text-white-80">{{ r.time }}</td>
+                      <td>
+                        {% if r.subject %}
+                          <span class="badge" style="background:rgba(0,229,160,0.1);color:var(--success);font-weight:500;">
+                            <i class="fas fa-book me-1"></i>{{ r.subject }}
+                          </span>
+                        {% else %}
+                          <span class="text-white-40" style="font-size:0.8rem;">—</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <span class="badge" style="background:var(--success-dim);color:var(--success);">
+                          <i class="fas fa-check me-1"></i>Present
+                        </span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="5" class="text-center text-white-60 py-5">
+                        <i class="fas fa-clipboard-list fa-2x mb-2 d-block"></i>
+                        No attendance records yet
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <small class="text-white-60">
+                <i class="fas fa-info-circle me-1"></i>Deduplicated — one row per student per day
+              </small>
+              <small id="filteredCount" class="text-white-60"></small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Class Scheduler ── -->
+      <div class="col-12" id="section-schedule">
+        <div class="card-modern fade-in-up">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="fas fa-calendar-alt me-2"></i>Class Schedule Manager</span>
+            <small class="text-white-60" style="font-size:0.78rem;">Override timetable for any date</small>
+          </div>
+          <div class="card-body" style="padding:1.25rem;">
+            <!-- Date picker -->
+            <div class="d-flex gap-2 align-items-center flex-wrap mb-3">
+              <input type="date" id="scheduleDate" class="form-control form-control-modern" style="max-width:180px;">
+              <button class="btn btn-sm btn-modern" onclick="loadSchedule()">
+                <i class="fas fa-calendar-check me-1"></i>Load
+              </button>
+              <button class="btn btn-sm" style="background:rgba(255,82,82,0.12);border:1px solid rgba(255,82,82,0.3);color:#ff8080;" onclick="clearSchedule()">
+                <i class="fas fa-undo me-1"></i>Reset to Default
+              </button>
+            </div>
+            <div id="scheduleOverrideBadge" class="d-none mb-2">
+              <span style="background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.3);color:var(--success);border-radius:20px;padding:0.2rem 0.8rem;font-size:0.78rem;">
+                <i class="fas fa-edit me-1"></i>Custom schedule active for this date
+              </span>
+            </div>
+            <!-- Slots -->
+            <div id="scheduleSlots" class="d-flex flex-column gap-2 mb-3"></div>
+            <!-- Add slot -->
+            <div style="background:#f8faff;border:1px solid rgba(99,102,241,0.10);border-radius:10px;padding:0.85rem;" class="d-flex gap-2 flex-wrap align-items-end">
+              <div>
+                <label class="form-label text-white-60" style="font-size:0.75rem;">Start</label>
+                <input type="time" id="newStart" class="form-control form-control-modern" style="max-width:120px;">
+              </div>
+              <div>
+                <label class="form-label text-white-60" style="font-size:0.75rem;">End</label>
+                <input type="time" id="newEnd" class="form-control form-control-modern" style="max-width:120px;">
+              </div>
+              <div style="flex:1; min-width:150px;">
+                <label class="form-label text-white-60" style="font-size:0.75rem;">Subject</label>
+                <input type="text" id="newSubject" class="form-control form-control-modern" placeholder="e.g. ADBMS">
+              </div>
+              <div style="min-width:100px;">
+                <label class="form-label text-white-60" style="font-size:0.75rem;">Room</label>
+                <input type="text" id="newRoom" class="form-control form-control-modern" placeholder="e.g. A-304">
+              </div>
+              <button class="btn btn-sm btn-modern" onclick="addSlot()" style="height:40px;">
+                <i class="fas fa-plus me-1"></i>Add
+              </button>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+              <button class="btn btn-modern" onclick="saveSchedule()">
+                <i class="fas fa-save me-1"></i>Save Schedule
+              </button>
+            </div>
+            <div id="scheduleSaveMsg" class="mt-2 text-center d-none" style="font-size:0.82rem;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /row -->
+  </div><!-- /container -->
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer" style="margin-bottom:4.5rem;">
+    <div class="footer-inner">
+      <span class="footer-brand"><i class="fas fa-brain me-1"></i>AI Smart Attendance</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-credit">Made with <i class="fas fa-heart footer-heart"></i> by <strong>Anshu Shekhar</strong></span>
+      <span class="footer-sep">·</span>
+      <a href="https://www.linkedin.com/in/anshu-shekhar-348233294/" target="_blank" class="footer-link">
+        <i class="fab fa-linkedin me-1"></i>LinkedIn
+      </a>
+      <a href="https://github.com/Ansu1431" target="_blank" class="footer-link">
+        <i class="fab fa-github me-1"></i>GitHub
+      </a>
+    </div>
+  </footer>
+
+  <!-- ── Mobile Bottom Navigation ── -->
+  <nav class="mobile-bottom-nav">
+    <a href="#section-register" onclick="scrollTo('#section-register')">
+      <i class="fas fa-user-plus"></i>Register
+    </a>
+    <a href="#section-students" onclick="scrollTo('#section-students')">
+      <i class="fas fa-users"></i>Students
+    </a>
+    <a href="#section-alerts" onclick="scrollTo('#section-alerts')">
+      <i class="fas fa-bell"></i>Alerts
+    </a>
+    <a href="#section-today" onclick="scrollTo('#section-today')">
+      <i class="fas fa-calendar-check"></i>Today
+    </a>
+    <a href="#section-attendance" onclick="scrollTo('#section-attendance')">
+      <i class="fas fa-history"></i>Records
+    </a>
+    <a href="#section-schedule" onclick="scrollTo('#section-schedule')">
+      <i class="fas fa-calendar-alt"></i>Schedule
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Smooth scroll for bottom nav
+    function scrollTo(sel) {
+      const el = document.querySelector(sel);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    // Highlight active bottom nav item on scroll
+    const sections = ['register','students','marks','alerts','today','attendance'];
+    const navLinks = document.querySelectorAll('.mobile-bottom-nav a');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(l => l.classList.remove('active'));
+          const match = document.querySelector(`.mobile-bottom-nav a[href="#section-${e.target.id.replace('section-','')}"]`);
+          if (match) match.classList.add('active');
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('[id^="section-"]').forEach(s => obs.observe(s));
+
+    // ── Admin: Current Class Banner ────────────────────────────────
+    async function refreshAdminClassBanner() {
+      try {
+        const res = await fetch('/api/current_class');
+        const d   = await res.json();
+        const b   = document.getElementById('adminClassBanner');
+        if (!b) return;
+        if (d.active) {
+          document.getElementById('adminBannerSubject').textContent = d.subject;
+          document.getElementById('adminBannerRoom').textContent    = d.room;
+          document.getElementById('adminBannerTime').textContent    = `${d.start} – ${d.end}`;
+          document.getElementById('adminBannerMins').textContent    = `${d.mins_remaining} min left`;
+          b.classList.remove('d-none');
+        } else {
+          b.classList.add('d-none');
+        }
+      } catch(_) {}
+    }
+    refreshAdminClassBanner();
+    setInterval(refreshAdminClassBanner, 60000);
+
+    // ── Class Scheduler ────────────────────────────────────────────
+    let scheduleSlots = [];
+
+    // Set date picker to tomorrow by default
+    (function() {
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+      const y = tomorrow.getFullYear();
+      const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+      const d = String(tomorrow.getDate()).padStart(2, '0');
+      const el = document.getElementById('scheduleDate');
+      if (el) el.value = `${y}-${m}-${d}`;
+    })();
+
+    function renderSlots() {
+      const box = document.getElementById('scheduleSlots');
+      if (!box) return;
+      if (!scheduleSlots.length) {
+        box.innerHTML = '<div style="font-size:0.82rem;color:var(--muted2);padding:0.5rem 0;"><i class="fas fa-inbox me-1"></i>No slots yet — add below or default schedule will be used</div>';
+        return;
+      }
+      box.innerHTML = scheduleSlots.map((s, i) => `
+        <div style="display:flex;gap:0.6rem;align-items:center;background:var(--success-dim);
+             border:1px solid rgba(5,150,105,0.2);border-radius:10px;padding:0.6rem 0.9rem;flex-wrap:wrap;">
+          <span style="font-size:0.8rem;color:var(--success);font-weight:700;min-width:110px;">
+            <i class="fas fa-clock me-1"></i>${s.start} – ${s.end}
+          </span>
+          <span style="flex:1;font-weight:700;font-size:0.88rem;color:var(--text);">${s.subject}</span>
+          ${s.room ? `<span style="font-size:0.75rem;color:var(--muted);"><i class="fas fa-map-marker-alt me-1"></i>${s.room}</span>` : ''}
+          <button onclick="removeSlot(${i})" style="background:var(--danger-dim);border:1px solid rgba(239,68,68,0.2);color:var(--danger);border-radius:6px;padding:0.2rem 0.55rem;font-size:0.78rem;cursor:pointer;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>`).join('');
+    }
+
+    function removeSlot(idx) {
+      scheduleSlots.splice(idx, 1);
+      renderSlots();
+    }
+
+    function addSlot() {
+      const start   = (document.getElementById('newStart')?.value   || '').trim();
+      const end     = (document.getElementById('newEnd')?.value     || '').trim();
+      const subject = (document.getElementById('newSubject')?.value || '').trim();
+      const room    = (document.getElementById('newRoom')?.value    || '').trim();
+      if (!start || !end || !subject) {
+        alert('Please fill in Start time, End time, and Subject.'); return;
+      }
+      scheduleSlots.push({ start, end, subject, room });
+      scheduleSlots.sort((a, b) => a.start.localeCompare(b.start));
+      // Clear inputs
+      ['newStart','newEnd','newSubject','newRoom'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      renderSlots();
+    }
+
+    async function loadSchedule() {
+      const date = document.getElementById('scheduleDate')?.value;
+      if (!date) { alert('Pick a date first'); return; }
+      try {
+        const r = await fetch(`/api/admin/get_schedule?date=${date}`);
+        const d = await r.json();
+        scheduleSlots = d.slots || [];
+        const badge = document.getElementById('scheduleOverrideBadge');
+        if (badge) d.overridden ? badge.classList.remove('d-none') : badge.classList.add('d-none');
+        renderSlots();
+        const msg = document.getElementById('scheduleSaveMsg');
+        if (msg) { msg.textContent = `Loaded for ${date}`; msg.className = 'mt-2 text-center'; msg.style.color = 'var(--success)'; msg.classList.remove('d-none'); setTimeout(() => msg.classList.add('d-none'), 2000); }
+      } catch(e) { alert('Failed to load: ' + e); }
+    }
+
+    async function saveSchedule() {
+      const date = document.getElementById('scheduleDate')?.value;
+      if (!date) { alert('Pick a date first'); return; }
+      try {
+        const r = await fetch('/api/admin/save_schedule', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ date, slots: scheduleSlots })
+        });
+        const d = await r.json();
+        const msg = document.getElementById('scheduleSaveMsg');
+        if (msg) {
+          msg.textContent = d.ok ? `✅ Schedule saved for ${date} (${d.slots_saved} slot${d.slots_saved !== 1 ? 's' : ''})` : `Error: ${d.error}`;
+          msg.style.color = d.ok ? 'var(--success)' : '#ff8080';
+          msg.classList.remove('d-none');
+          setTimeout(() => msg.classList.add('d-none'), 3000);
+        }
+        const badge = document.getElementById('scheduleOverrideBadge');
+        if (badge && d.ok) badge.classList.remove('d-none');
+        refreshAdminClassBanner();
+      } catch(e) { alert('Save failed: ' + e); }
+    }
+
+    async function clearSchedule() {
+      const date = document.getElementById('scheduleDate')?.value;
+      if (!date) { alert('Pick a date first'); return; }
+      if (!confirm(`Reset ${date} to default timetable?`)) return;
+      await fetch('/api/admin/clear_schedule', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ date })
+      });
+      scheduleSlots = [];
+      const badge = document.getElementById('scheduleOverrideBadge');
+      if (badge) badge.classList.add('d-none');
+      renderSlots();
+      refreshAdminClassBanner();
+    }
+
+    // Init with tomorrow's slots
+    loadSchedule();
+  </script>
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>

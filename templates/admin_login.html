@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login — AI Smart Attendance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container" style="padding-top:0; padding-bottom:0;">
+    <div class="row justify-content-center align-items-center min-vh-100">
+      <div class="col-md-5 col-lg-4">
+        <div class="glass-card fade-in-up" style="border-top: 4px solid var(--accent);">
+
+          <!-- Logo / heading -->
+          <div class="text-center mb-4">
+            <div class="login-card__logo mx-auto mb-3">
+              <i class="fas fa-brain"></i>
+            </div>
+            <h2 class="page-title mb-1" style="font-size:1.55rem;">Admin Login</h2>
+            <p class="text-white-60" style="font-size:0.88rem;">
+              AI Smart Attendance System
+            </p>
+          </div>
+
+          {% if error %}
+            <div style="background:var(--danger-light);border:1px solid rgba(239,68,68,0.25);
+                        border-radius:var(--radius-xs);padding:0.75rem 1rem;
+                        color:var(--danger);font-size:0.86rem;margin-bottom:1.2rem;">
+              <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+            </div>
+          {% endif %}
+
+          <form method="post" action="/admin/login">
+            <div class="mb-4">
+              <label class="form-label-modern">
+                <i class="fas fa-lock me-1"></i> Password
+              </label>
+              <input type="password" class="form-control form-control-modern"
+                     name="password" required autofocus
+                     placeholder="Enter admin password">
+            </div>
+
+            <button type="submit" class="btn btn-modern btn-lg w-100 mb-3">
+              <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </button>
+
+            <div class="text-center mb-2">
+              <a href="/admin/forgot-password" class="text-decoration-none"
+                 style="font-size:0.83rem;color:var(--accent);">
+                <i class="fas fa-key me-1"></i>Forgot Password?
+              </a>
+            </div>
+
+            <div class="text-center">
+              <a href="/" class="text-decoration-none"
+                 style="font-size:0.83rem;color:var(--muted);">
+                <i class="fas fa-arrow-left me-1"></i>Back to Home
+              </a>
+            </div>
+          </form>
+
+          <div class="mt-4 pt-3" style="border-top:1px solid var(--border);">
+            <div class="d-flex justify-content-center gap-4">
+              <div class="text-center">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--success-dim);
+                            display:grid;place-items:center;margin:0 auto 0.4rem;">
+                  <i class="fas fa-shield-alt" style="color:var(--success);font-size:0.9rem;"></i>
+                </div>
+                <small style="font-size:0.7rem;color:var(--muted2);">Secure</small>
+              </div>
+              <div class="text-center">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--accent-dim);
+                            display:grid;place-items:center;margin:0 auto 0.4rem;">
+                  <i class="fas fa-lock" style="color:var(--accent);font-size:0.9rem;"></i>
+                </div>
+                <small style="font-size:0.7rem;color:var(--muted2);">Private</small>
+              </div>
+              <div class="text-center">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--info-dim);
+                            display:grid;place-items:center;margin:0 auto 0.4rem;">
+                  <i class="fas fa-user-check" style="color:var(--info);font-size:0.9rem;"></i>
+                </div>
+                <small style="font-size:0.7rem;color:var(--muted2);">Verified</small>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /glass-card -->
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .login-card__logo {
+      width: 58px; height: 58px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      display: grid; place-items: center;
+      font-size: 1.5rem; color: #fff;
+      box-shadow: 0 8px 24px rgba(99,102,241,0.30);
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Low Performance Alert</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f4f6f9;
+        color: #1f2a37;
+        padding: 24px;
+        margin: 0;
+      }
+      .wrapper {
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .header {
+        background: linear-gradient(135deg, #dc2626, #f97316);
+        color: #fff;
+        border-radius: 12px 12px 0 0;
+        padding: 28px 32px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .header p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 0 0 12px 12px;
+        padding: 28px 32px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      }
+      .alert-box {
+        background: #fff7ed;
+        border-left: 4px solid #f97316;
+        border-radius: 6px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+      }
+      .alert-box .alert-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: #c2410c;
+        margin-bottom: 4px;
+      }
+      .alert-box p {
+        margin: 0;
+        font-size: 14px;
+        color: #78350f;
+      }
+      .stat-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .stat-box {
+        flex: 1;
+        min-width: 140px;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+      }
+      .stat-box.danger {
+        background: #fef2f2;
+        border-color: #fca5a5;
+      }
+      .stat-box.ok {
+        background: #f0fdf4;
+        border-color: #86efac;
+      }
+      .stat-box .val {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .stat-box.danger .val { color: #dc2626; }
+      .stat-box.ok .val { color: #16a34a; }
+      .stat-box .lbl {
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .threshold-note {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 8px;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 14px;
+      }
+      th {
+        background: #f9fafb;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+      }
+      .pill {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .pill-red { background: #fee2e2; color: #991b1b; }
+      .pill-blue { background: #eff6ff; color: #1d4ed8; }
+      .footer {
+        text-align: center;
+        margin-top: 24px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .footer a { color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Header -->
+      <div class="header">
+        <h1>⚠️ Low Performance Alert</h1>
+        <p>AI Smart Attendance System – Automated Notification</p>
+      </div>
+
+      <div class="card">
+        <p>Dear <strong>{{ student.name }}</strong> and Parent/Guardian,</p>
+        <p>
+          This is an automated notification from the <strong>AI Smart Attendance System</strong>.
+          Our records indicate that <strong>{{ student.name }}</strong> has fallen below the
+          minimum required threshold of <strong>{{ threshold }}%</strong> in the following area(s):
+        </p>
+
+        <!-- Alert breakdown -->
+        {% for alert in alerts %}
+        <div class="alert-box">
+          {% if alert.type == 'marks' %}
+            <div class="alert-title">📉 Marks Below Threshold</div>
+            <p>Current overall marks: <strong>{{ alert.percentage }}%</strong> (minimum required: {{ threshold }}%)</p>
+          {% elif alert.type == 'attendance' %}
+            <div class="alert-title">📅 Attendance Below Threshold</div>
+            <p>Current attendance rate: <strong>{{ alert.percentage }}%</strong> (minimum required: {{ threshold }}%)</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Stats summary -->
+        <div class="stat-row">
+          {% if marks_percentage is not none %}
+          <div class="stat-box {% if marks_percentage < threshold %}danger{% else %}ok{% endif %}">
+            <div class="val">{{ marks_percentage }}%</div>
+            <div class="lbl">Overall Marks</div>
+          </div>
+          {% endif %}
+          {% if attendance_percentage is not none %}
+          <div class="stat-box {% if attendance_percentage < threshold %}danger{% else %}ok{% endif %}">
+            <div class="val">{{ attendance_percentage }}%</div>
+            <div class="lbl">Attendance Rate</div>
+          </div>
+          {% endif %}
+          <div class="stat-box ok">
+            <div class="val">{{ attendance.count }}</div>
+            <div class="lbl">Classes Attended</div>
+          </div>
+        </div>
+        <p class="threshold-note">* Minimum required threshold: {{ threshold }}%</p>
+
+        <!-- Marks detail table -->
+        {% if marks %}
+        <p><strong>Detailed Marks Breakdown:</strong></p>
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Exam Type</th>
+              <th>Term</th>
+              <th>Score</th>
+              <th>Max</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in marks %}
+            <tr>
+              <td>{{ m.subject }}</td>
+              <td>
+                <span class="pill {% if m.exam_type == 'sessional' %}pill-blue{% else %}pill-red{% endif %}">
+                  {{ m.exam_type }}
+                </span>
+              </td>
+              <td>{{ m.term }}</td>
+              <td>{{ m.score }}</td>
+              <td>{{ m.max_score }}</td>
+              <td>
+                {% if m.max_score > 0 %}
+                  {{ "%.1f"|format(m.score / m.max_score * 100) }}%
+                {% else %}
+                  –
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        <p>
+          We strongly encourage <strong>{{ student.name }}</strong> to dedicate additional effort
+          to their studies and ensure regular attendance going forward. Please contact the
+          institution if you need any support or guidance.
+        </p>
+
+        <p style="font-size:13px; color:#6b7280;">
+          This email was automatically generated by the AI Smart Attendance System.
+          Please do not reply to this message.
+        </p>
+      </div>
+
+      <div class="footer">
+        <p>AI Smart Attendance System &mdash; Powered by Face Recognition &amp; n8n Automation</p>
+      </div>
+    </div>
+  </body>
+</html>

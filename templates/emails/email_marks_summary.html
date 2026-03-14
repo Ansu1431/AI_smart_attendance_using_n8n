@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Marks Summary</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f4f6f9;
+        color: #1f2a37;
+        padding: 24px;
+      }
+      .card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      th {
+        background: #f9fafb;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .pill {
+        display: inline-block;
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="title">Marks Summary - {{ student.name }}</div>
+      <div class="muted">
+        Attendance count: {{ attendance.count }}
+        {% if attendance.last_seen %}
+          | Last seen: {{ attendance.last_seen.date }} {{ attendance.last_seen.time }}
+        {% endif %}
+      </div>
+      <p>{{ summary }}</p>
+
+      {% if marks %}
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Exam</th>
+            <th>Term</th>
+            <th>Score</th>
+            <th>Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in marks %}
+          <tr>
+            <td>{{ m.subject }}</td>
+            <td><span class="pill">{{ m.exam_type }}</span></td>
+            <td>{{ m.term }}</td>
+            <td>{{ m.score }}</td>
+            <td>{{ m.max_score }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No marks have been recorded yet.</p>
+      {% endif %}
+    </div>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+# Email Configuration Example
+# Copy this file to email_config.py and fill in your details
+# DO NOT commit email_config.py to git (it's in .gitignore)
+
+# SMTP Server Configuration
+MAIL_SERVER = 'smtp.gmail.com'  # For Gmail
+# MAIL_SERVER = 'smtp-mail.outlook.com'  # For Outlook
+# MAIL_SERVER = 'smtp.mail.yahoo.com'  # For Yahoo
+
+MAIL_PORT = 587  # Usually 587 for TLS, 465 for SSL
+MAIL_USE_TLS = True  # Set to False if using SSL on port 465
+MAIL_USE_SSL = False  # Set to True if using SSL on port 465
+
+# Your email credentials
+MAIL_USERNAME = 'shekhar.ansu14@gmail.com'  # Your email address
+MAIL_PASSWORD = 'Ansu.0114'  # Your email password or App Password
+
+# Email sender
+MAIL_DEFAULT_SENDER = 'shekhar.ansu14@gmail.com'  # Usually same as MAIL_USERNAME
+
+# Admin details
+ADMIN_EMAIL = 'shekhar.ansu14@gmail.com'  # Admin email (for password reset)
+ADMIN_NAME = 'Admin'  # Admin display name

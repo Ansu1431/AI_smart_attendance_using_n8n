@@ -1,0 +1,158 @@
+{
+  "name": "AI Attendance – Low Performance Alert Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "attendance-alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-alert",
+      "name": "Receive Alert from Flask",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 340],
+      "webhookId": "attendance-alert-webhook",
+      "notes": "Flask posts here whenever a student falls below 40%. Set this URL as N8N_ALERT_WEBHOOK in your Flask environment."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse incoming alert payload from Flask\n// Expected payload structure:\n// {\n//   student: 'Anshu',\n//   student_email: 'student@example.com',\n//   parent_email: 'parent@example.com',\n//   alerts: [ {type:'marks', percentage:32.5}, {type:'attendance', percentage:28.0} ],\n//   marks_percentage: 32.5,\n//   attendance_percentage: 28.0,\n//   threshold: 40,\n//   triggered_at: '2026-03-09T10:30:00'\n// }\n\nconst body = items[0].json.body || items[0].json;\n\nconst student            = body.student             || 'Unknown Student';\nconst student_email      = body.student_email       || '';\nconst parent_email       = body.parent_email        || '';\nconst alerts             = body.alerts              || [];\nconst marks_pct          = body.marks_percentage;\nconst attendance_pct     = body.attendance_percentage;\nconst threshold          = body.threshold           || 40;\nconst triggered_at       = body.triggered_at        || new Date().toISOString();\n\n// Build alert summary text\nconst alertLines = alerts.map(a => {\n  if (a.type === 'marks')      return `📉 Marks: ${a.percentage}% (below ${threshold}%)`;\n  if (a.type === 'attendance') return `📅 Attendance: ${a.percentage}% (below ${threshold}%)`;\n  return `⚠ ${a.type}: ${a.percentage}%`;\n}).join('\\n');\n\n// Collect all recipients (filter empty)\nconst recipients = [student_email, parent_email].filter(e => e && e.includes('@'));\n\nreturn recipients.map(email => ({\n  json: {\n    to: email,\n    student,\n    student_email,\n    parent_email,\n    alertLines,\n    marks_pct,\n    attendance_pct,\n    threshold,\n    triggered_at,\n    alerts,\n    is_parent: email === parent_email,\n    recipient_type: email === parent_email ? 'Parent/Guardian' : 'Student'\n  }\n}));"
+      },
+      "id": "parse-alert",
+      "name": "Parse & Split Recipients",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 340],
+      "notes": "Parses the Flask payload and splits into individual email items (one per recipient: student + parent)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-recipient",
+              "leftValue": "={{ $json.to }}",
+              "rightValue": "@",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-valid-email",
+      "name": "Valid Email?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [680, 340],
+      "notes": "Only proceed if the recipient has a valid email address"
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@yourdomain.com",
+        "toEmail": "={{ $json.to }}",
+        "subject": "=⚠️ Low Performance Alert – {{ $json.student }}",
+        "emailType": "html",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset='utf-8'>\n  <style>\n    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1f2937; padding: 24px; }\n    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }\n    .header { background: linear-gradient(135deg, #dc2626, #f97316); color: #fff; padding: 28px 32px; }\n    .header h1 { margin: 0 0 6px; font-size: 20px; }\n    .header p  { margin: 0; opacity: 0.85; font-size: 13px; }\n    .body { padding: 28px 32px; }\n    .alert-box { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 6px; padding: 14px 18px; margin: 16px 0; }\n    .stat-row { display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap; }\n    .stat { flex: 1; min-width: 120px; border-radius: 10px; padding: 14px; text-align: center; }\n    .stat.bad  { background: #fef2f2; border: 1px solid #fca5a5; }\n    .stat.ok   { background: #f0fdf4; border: 1px solid #86efac; }\n    .stat .val { font-size: 24px; font-weight: 700; margin-bottom: 4px; }\n    .stat.bad .val { color: #dc2626; }\n    .stat.ok  .val { color: #16a34a; }\n    .stat .lbl { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }\n    .footer { text-align: center; padding: 16px; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }\n  </style>\n</head>\n<body>\n<div class='card'>\n  <div class='header'>\n    <h1>⚠️ Low Performance Alert</h1>\n    <p>AI Smart Attendance System – Automated Notification</p>\n  </div>\n  <div class='body'>\n    <p>Dear <strong>{{ $json.recipient_type === 'Parent/Guardian' ? 'Parent/Guardian of ' + $json.student : $json.student }}</strong>,</p>\n    <p>This is an automated alert. The following concern(s) have been detected:</p>\n    <div class='alert-box'>\n      <pre style='margin:0;font-family:inherit;white-space:pre-wrap;'>{{ $json.alertLines }}</pre>\n    </div>\n    <div class='stat-row'>\n      {{ $json.marks_pct !== null ? `<div class='stat ${$json.marks_pct < $json.threshold ? 'bad' : 'ok'}'><div class='val'>${$json.marks_pct}%</div><div class='lbl'>Overall Marks</div></div>` : '' }}\n      {{ $json.attendance_pct !== null ? `<div class='stat ${$json.attendance_pct < $json.threshold ? 'bad' : 'ok'}'><div class='val'>${$json.attendance_pct}%</div><div class='lbl'>Attendance Rate</div></div>` : '' }}\n    </div>\n    <p style='font-size:13px;color:#6b7280;'>Minimum required threshold: {{ $json.threshold }}% &bull; Checked at: {{ $json.triggered_at }}</p>\n    <p>Please take immediate action to improve performance. Contact the institution for further support.</p>\n  </div>\n  <div class='footer'>AI Smart Attendance System &bull; Automated Notification &bull; Do not reply</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 280],
+      "credentials": {
+        "smtp": {
+          "id": "YOUR_SMTP_CREDENTIALS_ID",
+          "name": "SMTP account"
+        }
+      },
+      "notes": "Configure your SMTP credentials in n8n (Gmail/Outlook/etc.). The email is sent separately to student and parent."
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Alerts Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "student": "={{ $json.student }}",
+            "marks_percentage": "={{ $json.marks_pct }}",
+            "attendance_percentage": "={{ $json.attendance_pct }}",
+            "alert_types": "={{ $json.alerts.map(a=>a.type).join(', ') }}",
+            "triggered_at": "={{ $json.triggered_at }}",
+            "notified_email": "={{ $json.to }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "log-to-sheet",
+      "name": "Log Alert to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [900, 440],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIALS_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Logs every alert to an 'Alerts Log' sheet in Google Sheets for record-keeping. Create this sheet tab in your spreadsheet."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true, student: $('Parse & Split Recipients').first().json.student, alerts_count: $('Parse & Split Recipients').first().json.alerts.length }) }}"
+      },
+      "id": "respond-ok",
+      "name": "Respond OK to Flask",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 520],
+      "notes": "Sends a 200 OK back to Flask so it knows the alert was received"
+    }
+  ],
+  "connections": {
+    "Receive Alert from Flask": {
+      "main": [
+        [
+          { "node": "Parse & Split Recipients", "type": "main", "index": 0 },
+          { "node": "Respond OK to Flask",       "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse & Split Recipients": {
+      "main": [[{ "node": "Valid Email?", "type": "main", "index": 0 }]]
+    },
+    "Valid Email?": {
+      "main": [
+        [
+          { "node": "Send Alert Email",          "type": "main", "index": 0 },
+          { "node": "Log Alert to Google Sheet", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": ["attendance", "alerts", "email", "low-performance"],
+  "_comment": "SETUP STEPS: 1) Import this JSON into n8n  2) Configure SMTP credentials (Gmail App Password recommended)  3) Set your Google Sheet ID and add an 'Alerts Log' sheet tab  4) Activate the workflow  5) Copy the Webhook URL and set it as N8N_ALERT_WEBHOOK environment variable in Flask"
+}

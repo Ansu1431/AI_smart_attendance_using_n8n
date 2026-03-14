@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#060f0c" />
+  <title>{% if not not_found %}{{ profile.name }} — Profile{% else %}Not Found{% endif %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="/static/css/style.css" rel="stylesheet">
+  <style>
+    body { background: var(--bg-1, #060f0c); }
+    .profile-hero {
+      background: linear-gradient(135deg, rgba(0,229,160,0.1) 0%, rgba(0,100,70,0.05) 100%);
+      border: 1px solid rgba(0,229,160,0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid rgba(0,229,160,0.5);
+      object-fit: cover;
+      margin: 0 auto 0.75rem;
+      display: block;
+      background: rgba(0,229,160,0.1);
+    }
+    .profile-avatar-placeholder {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid rgba(0,229,160,0.3);
+      background: rgba(0,229,160,0.08);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 0.75rem;
+      font-size: 2rem; color: var(--success, #00e5a0);
+    }
+    .profile-name {
+      font-size: 1.4rem; font-weight: 800;
+      color: #fff; margin-bottom: 0.25rem;
+    }
+    .stat-row {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem; margin-bottom: 1.25rem;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.85rem 0.5rem;
+      text-align: center;
+    }
+    .stat-box.danger { border-color: rgba(255,82,82,0.3); }
+    .stat-box .sv { font-size: 1.3rem; font-weight: 800; color: var(--success, #00e5a0); }
+    .stat-box.danger .sv { color: var(--danger, #ff5252); }
+    .stat-box .sl { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
+    .marks-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .marks-card-header {
+      padding: 0.8rem 1rem;
+      font-weight: 700; font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .badge-pct {
+      display: inline-flex; align-items: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .badge-ok   { background: rgba(0,229,160,0.15); color: var(--success,#00e5a0); }
+    .badge-warn { background: rgba(255,82,82,0.15);  color: var(--danger,#ff5252); }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar-custom">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-brain"></i>
+        <span>AI Attendance</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width:520px; padding-bottom:5rem;">
+
+    {% if not_found %}
+    <div class="text-center py-5">
+      <i class="fas fa-user-slash fa-3x mb-3" style="color:rgba(255,255,255,0.2);"></i>
+      <h4 class="text-white-60">Student not found</h4>
+      <p class="text-white-40" style="font-size:0.85rem;">No profile found for "{{ name }}"</p>
+      <a href="/" class="btn btn-modern mt-2"><i class="fas fa-arrow-left me-1"></i>Back to Attendance</a>
+    </div>
+
+    {% else %}
+
+    <!-- Hero -->
+    <div class="profile-hero fade-in-up">
+      {% if profile.name %}
+        <div class="profile-avatar-placeholder">
+          <i class="fas fa-user-graduate"></i>
+        </div>
+      {% endif %}
+      <div class="profile-name">{{ profile.name }}</div>
+      <div style="font-size:0.78rem; color:rgba(255,255,255,0.45); margin-top:0.2rem;">
+        <i class="fas fa-id-card me-1"></i>CSE / CST 6A
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stat-row fade-in-up" style="animation-delay:0.07s;">
+      <div class="stat-box {% if marks_pct is not none and marks_pct < threshold %}danger{% endif %}">
+        <div class="sv">{% if marks_pct is not none %}{{ marks_pct }}%{% else %}—{% endif %}</div>
+        <div class="sl">Overall Marks</div>
+      </div>
+      <div class="stat-box {% if att_pct is not none and att_pct < threshold %}danger{% endif %}">
+        <div class="sv">{% if att_pct is not none %}{{ att_pct }}%{% else %}—{% endif %}</div>
+        <div class="sl">Attendance</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv">{{ attendance.count }}</div>
+        <div class="sl">Classes</div>
+      </div>
+    </div>
+
+    {% if marks_pct is not none and marks_pct < threshold %}
+    <div class="alert-banner fade-in-up mb-3" style="animation-delay:0.1s;
+         background:rgba(255,82,82,0.1); border:1px solid rgba(255,82,82,0.3);
+         border-radius:12px; padding:0.75rem 1rem; font-size:0.82rem; color:#ff8080;">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      Your marks ({{ marks_pct }}%) are below the {{ threshold }}% threshold. Please speak to your teacher.
+    </div>
+    {% endif %}
+
+    <!-- Marks Breakdown -->
+    {% if marks %}
+    <div class="marks-card fade-in-up" style="animation-delay:0.12s;">
+      <div class="marks-card-header">
+        <i class="fas fa-chart-bar" style="color:var(--success,#00e5a0);"></i>
+        Marks Breakdown
+      </div>
+      <div class="table-responsive">
+        <table class="table table-modern mb-0" style="font-size:0.8rem;">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Exam</th>
+              <th>Term</th>
+              <th>Score</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in marks %}
+            {% set pct = ((m.score / m.max_score) * 100) | round(1) if m.max_score > 0 else 0 %}
+            <tr>
+              <td>{{ m.subject }}</td>
+              <td>{{ m.exam_type | capitalize }}</td>
+              <td>{{ m.term }}</td>
+              <td>{{ m.score }}/{{ m.max_score }}</td>
+              <td>
+                <span class="badge-pct {% if pct >= threshold %}badge-ok{% else %}badge-warn{% endif %}">
+                  {{ pct }}%
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="marks-card fade-in-up text-center py-4" style="animation-delay:0.12s;">
+      <i class="fas fa-inbox fa-2x mb-2" style="color:rgba(255,255,255,0.15);"></i>
+      <p class="text-white-40 mb-0" style="font-size:0.83rem;">No marks recorded yet</p>
+    </div>
+    {% endif %}
+
+    <!-- Last seen -->
+    {% if attendance.last_seen %}
+    <div class="text-center mt-3 fade-in-up" style="animation-delay:0.18s; font-size:0.75rem; color:rgba(255,255,255,0.35);">
+      <i class="fas fa-clock me-1"></i>Last seen: {{ attendance.last_seen.date }} at {{ attendance.last_seen.time }}
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="footer-brand"><i class="fas fa-brain me-1"></i>AI Smart Attendance</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-credit">Made with <i class="fas fa-heart footer-heart"></i> by <strong>Anshu Shekhar</strong></span>
+      <span class="footer-sep">·</span>
+      <a href="https://www.linkedin.com/in/anshu-shekhar-348233294/" target="_blank" class="footer-link">
+        <i class="fab fa-linkedin me-1"></i>LinkedIn
+      </a>
+      <a href="https://github.com/Ansu1431" target="_blank" class="footer-link">
+        <i class="fab fa-github me-1"></i>GitHub
+      </a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
