@@ -5,4 +5,4 @@ numpy
 Pillow
 opencv-python
 ImageHash
-itsdangerous
+itsdangerous\ngspread==6.1.3\ngoogle-auth==2.35.0\ngoogle-auth-oauthlib==1.2.1\ngoogle-auth-httplib2==0.2.0
